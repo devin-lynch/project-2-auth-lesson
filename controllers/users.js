@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const db = require('../models')
+const crypto = require('crypto-js')
 
 // GET /users/new -- render a form to create a new user
 router.get('/new', (req, res) => {
@@ -13,11 +14,12 @@ router.post('/', async (req, res) => {
         // create a new user
         const newUser = await db.user.create(req.body)
         // store that new user's id as a cookie in the browser
+        const encryptedUserId = crypto.AES.encrypt(newUser.id.toString(), process.env.ENC_SECRET)
+        const encryptedUserIdString = encryptedUserId.toString()
         // res.cookie('key', value)
-        res.cookie('userId', newUser.id)
+        res.cookie('userId', encryptedUserIdString)
         // redirect to the homepage
         res.redirect('/users/profile')
-
     } catch(err) {
         console.warn(err)
         res.send(`Server Error 💀`)
@@ -57,8 +59,10 @@ router.post('/login', async (req, res) => {
             res.redirect('/users/login?message=' + noLoginMessage)
         // if the user is found and the supplied matches what is in the db -- log them in
         } else {
-            console.log('Loggin the user in!!!')
-            res.cookie('userId', user.id)
+            const encryptedUserId = crypto.AES.encrypt(user.id.toString(), process.env.ENC_SECRET)
+            const encryptedUserIdString = encryptedUserId.toString()
+            // res.cookie('key', value)
+            res.cookie('userId', encryptedUserIdString)
             res.redirect('/users/profile')
         }
     } catch(err) {
