@@ -22,7 +22,58 @@ router.post('/', async (req, res) => {
         console.warn(err)
         res.send(`Server Error 💀`)
     }
+})
+
+// GET /users/login -- show a login form to the user
+router.get('/login', (req, res) => {
+    console.log(req.query)
+    res.render('users/login.ejs', {
+        // if the req.query.message exists, pass it as as the message, otherwise pass in null
+        // ternary operator
+        // condition ? expression if truthy : expression if falsy
+        message: req.query.message ? req.query.message : null
+    })
+        
+})
+
+// POST /users/login -- accept a payload of form data and user it to log a user in
+router.post('/login', async (req, res) => {
+    try {
+        // look up the user in the db using the supplied email
+        const user = await db.user.findOne({
+            where: {
+                email: req.body.email
+            }
+        })
+        const noLoginMessage = 'Incorrect username or password'
+
+        // if the user is not found -- send the user back to the login form
+        if (!user) {
+            console.log(`user not found`)
+            res.redirect('/users/login?message=' + noLoginMessage)
+        // if the user is found but has given wrong password -- send them back to login form
+        } else if (user.password !== req.body.password) {
+            console.log(`Wrong password`)
+            res.redirect('/users/login?message=' + noLoginMessage)
+        // if the user is found and the supplied matches what is in the db -- log them in
+        } else {
+            console.log('Loggin the user in!!!')
+            res.cookie('userId', user.id)
+            res.redirect('/')
+        }
+    } catch(err) {
+        console.warn(err)
+        res.send(`Server Error 💀`)
+    }
     
+})
+
+// GET /users/logout -- log out a user by clearing the stored cookie
+router.get('/logout', (req, res) => {
+    // clear the cookie
+    res.clearCookie('userId')
+    // redirect to the homepage
+    res.redirect('/')
 })
 
 module.exports = router
