@@ -12,7 +12,7 @@ app.use(ejsLayouts)
 
 // route definitions
 app.get('/', (req, res) => {
-    res.send(`Hello, user auth 👋`)
+    res.render('home.ejs')
 })
 
 // listen on a port
